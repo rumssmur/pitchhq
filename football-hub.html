@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ PITCH — Live Football Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --grass: #00C851;
+    --grass-dark: #007A2E;
+    --pitch: #0a0e17;
+    --pitch-mid: #111827;
+    --pitch-card: #161d2e;
+    --accent: #00C851;
+    --gold: #FFD700;
+    --red: #FF3B3B;
+    --blue: #4A9EFF;
+    --white: #F0F4FF;
+    --muted: #6B7A99;
+    --border: rgba(255,255,255,0.07);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--pitch);
+    color: var(--white);
+    font-family: 'Barlow', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--pitch); }
+  ::-webkit-scrollbar-thumb { background: var(--grass-dark); border-radius: 4px; }
+
+  /* ─── TICKER ─── */
+  .ticker-bar {
+    background: var(--grass);
+    color: #000;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    overflow: hidden;
+    height: 28px;
+    display: flex;
+    align-items: center;
+  }
+  .ticker-label {
+    background: #000;
+    color: var(--grass);
+    padding: 0 14px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+  .ticker-track {
+    display: flex;
+    animation: ticker 40s linear infinite;
+    white-space: nowrap;
+    gap: 60px;
+    padding-left: 60px;
+  }
+  @keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+  .ticker-item { display: flex; align-items: center; gap: 8px; }
+  .ticker-dot { width: 6px; height: 6px; border-radius: 50%; background: #000; opacity: 0.4; }
+
+  /* ─── NAV ─── */
+  nav {
+    background: rgba(10,14,23,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 58px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--grass);
+    letter-spacing: 3px;
+    text-shadow: 0 0 30px rgba(0,200,81,0.5);
+    cursor: pointer;
+  }
+  .logo span { color: var(--white); }
+  .nav-links {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+  }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .nav-links a:hover, .nav-links a.active {
+    color: var(--white);
+    background: rgba(0,200,81,0.1);
+  }
+  .nav-links a.active { color: var(--grass); }
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,59,59,0.15);
+    border: 1px solid rgba(255,59,59,0.3);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--red);
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--red);
+    animation: pulse-red 1.2s ease infinite;
+  }
+  @keyframes pulse-red {
+    0%,100%{ box-shadow: 0 0 0 0 rgba(255,59,59,0.4); }
+    50%{ box-shadow: 0 0 0 5px rgba(255,59,59,0); }
+  }
+
+  /* ─── LAYOUT ─── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+
+  /* ─── SECTION HEADERS ─── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 18px;
+    background: var(--grass);
+    border-radius: 2px;
+  }
+  .see-all {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .see-all:hover { color: var(--grass); }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: var(--pitch-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: rgba(0,200,81,0.2); }
+
+  /* ─── HERO SCORES ─── */
+  .scores-strip {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 24px;
+    scrollbar-width: none;
+  }
+  .scores-strip::-webkit-scrollbar { display: none; }
+  .score-card {
+    background: var(--pitch-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    min-width: 200px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .score-card:hover { border-color: rgba(0,200,81,0.3); transform: translateY(-2px); }
+  .score-card.live { border-color: rgba(255,59,59,0.4); }
+  .score-card.live::before {
+    content: 'LIVE';
+    position: absolute;
+    top: 8px; right: 10px;
+    font-size: 9px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--red);
+  }
+  .score-league {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .score-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .score-team {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 14px;
+  }
+  .team-badge {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    background: rgba(255,255,255,0.05);
+  }
+  .score-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--white);
+    min-width: 28px;
+    text-align: center;
+  }
+  .score-time {
+    text-align: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .score-time.live-time { color: var(--red); font-weight: 600; }
+
+  /* ─── NEWS FEED ─── */
+  .news-item {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .news-item:last-child { border-bottom: none; }
+  .news-item:hover { background: rgba(255,255,255,0.03); }
+  .news-tag {
+    font-size: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .tag-transfer { background: rgba(74,158,255,0.15); color: var(--blue); }
+  .tag-result { background: rgba(0,200,81,0.12); color: var(--grass); }
+  .tag-injury { background: rgba(255,59,59,0.12); color: var(--red); }
+  .tag-news { background: rgba(255,215,0,0.12); color: var(--gold); }
+  .tag-wc { background: rgba(255,215,0,0.2); color: var(--gold); border: 1px solid rgba(255,215,0,0.3); }
+  .news-text { font-size: 14px; line-height: 1.5; color: rgba(240,244,255,0.85); }
+  .news-time { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* ─── TRANSFERS LIVE ─── */
+  .transfer-item {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .transfer-item:hover { background: rgba(255,255,255,0.02); }
+  .transfer-item:last-child { border-bottom: none; }
+  .player-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--grass-dark), var(--grass));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .transfer-info { flex: 1; }
+  .transfer-name { font-weight: 600; font-size: 14px; }
+  .transfer-clubs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .arrow-right { color: var(--grass); font-size: 14px; }
+  .transfer-fee {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    color: var(--gold);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .transfer-status {
+    font-size: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+    text-align: right;
+  }
+  .status-confirmed { color: var(--grass); }
+  .status-rumour { color: var(--muted); }
+  .status-medical { color: var(--blue); }
+  .status-official { color: var(--gold); }
+
+  /* ─── RIGHT SIDEBAR ─── */
+  .sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ─── STANDINGS TABLE ─── */
+  .standings-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+  .standings-table th {
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-size: 11px;
+    text-align: right;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .standings-table th:first-child { text-align: left; }
+  .standings-table td {
+    padding: 9px 10px;
+    text-align: right;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13px;
+  }
+  .standings-table td:first-child { text-align: left; }
+  .standings-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .pos-num { font-family: 'Bebas Neue', sans-serif; font-size: 15px; color: var(--muted); width: 22px; }
+  .pos-num.cl { color: var(--blue); }
+  .pos-num.rel { color: var(--red); }
+  .team-name-short { font-weight: 500; }
+  .pts { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: var(--white); }
+  .form-dots { display: flex; gap: 3px; justify-content: flex-end; }
+  .form-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .form-w { background: var(--grass); }
+  .form-d { background: var(--gold); }
+  .form-l { background: var(--red); }
+  .league-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .league-tab {
+    padding: 10px 14px;
+    font-size: 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .league-tab:hover { color: var(--white); }
+  .league-tab.active { color: var(--grass); border-bottom-color: var(--grass); }
+
+  /* ─── WORLD CUP HERO ─── */
+  .wc-hero {
+    background: linear-gradient(135deg, #0a1628 0%, #0d2244 50%, #091420 100%);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 14px;
+    padding: 30px 28px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .wc-hero::before {
+    content: '🏆';
+    position: absolute;
+    right: -10px; top: -10px;
+    font-size: 120px;
+    opacity: 0.08;
+    transform: rotate(15deg);
+  }
+  .wc-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top right, rgba(255,215,0,0.05) 0%, transparent 60%);
+  }
+  .wc-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+  }
+  .wc-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 46px;
+    line-height: 1;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+  }
+  .wc-title span { color: var(--gold); }
+  .wc-subtitle {
+    color: rgba(240,244,255,0.6);
+    font-size: 14px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .wc-countdown {
+    display: flex;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+  }
+  .wc-count-block {
+    text-align: center;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,215,0,0.15);
+    border-radius: 8px;
+    padding: 10px 16px;
+  }
+  .wc-count-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    line-height: 1;
+    color: var(--gold);
+  }
+  .wc-count-label {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ─── GROUP STAGE ─── */
+  .groups-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .group-card {
+    background: var(--pitch-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .group-header {
+    background: rgba(255,215,0,0.08);
+    padding: 8px 12px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    border-bottom: 1px solid rgba(255,215,0,0.1);
+  }
+  .group-team {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 12px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .group-team:hover { background: rgba(255,255,255,0.03); }
+  .group-team:last-child { border-bottom: none; }
+  .gt-left { display: flex; align-items: center; gap: 7px; }
+  .gt-flag { font-size: 16px; }
+  .gt-pts {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    color: var(--white);
+  }
+  .gt-pos-1 { color: var(--gold); font-weight: 600; }
+  .gt-pos-2 { color: var(--grass); font-weight: 500; }
+
+  /* ─── MINI GAMES PAGE ─── */
+  .games-hero {
+    background: linear-gradient(180deg, rgba(0,200,81,0.08) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 24px 0;
+    text-align: center;
+    margin-bottom: 0;
+  }
+  .games-hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    letter-spacing: 4px;
+    color: var(--white);
+  }
+  .games-hero-title span { color: var(--grass); }
+  .games-hero-sub {
+    color: var(--muted);
+    font-size: 15px;
+    margin-top: 8px;
+    margin-bottom: 24px;
+  }
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .game-card {
+    background: var(--pitch-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+  }
+  .game-card:hover {
+    border-color: var(--grass);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,200,81,0.12);
+  }
+  .game-banner {
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .game-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent, rgba(22,29,46,0.7));
+  }
+  .game-tag-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    z-index: 1;
+  }
+  .badge-new { background: var(--grass); color: #000; }
+  .badge-daily { background: rgba(74,158,255,0.2); color: var(--blue); border: 1px solid rgba(74,158,255,0.3); }
+  .badge-wc { background: rgba(255,215,0,0.2); color: var(--gold); border: 1px solid rgba(255,215,0,0.3); }
+  .game-info { padding: 16px 18px; }
+  .game-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .game-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .game-play-btn {
+    margin: 12px 18px 18px;
+    display: block;
+    background: rgba(0,200,81,0.1);
+    border: 1px solid rgba(0,200,81,0.3);
+    color: var(--grass);
+    text-align: center;
+    padding: 9px;
+    border-radius: 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .game-play-btn:hover { background: var(--grass); color: #000; }
+
+  /* ─── GAME MODALS ─── */
+  .game-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+  }
+  .game-modal.open { display: flex; }
+  .modal-box {
+    background: var(--pitch-mid);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 640px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalIn 0.3s cubic-bezier(.175,.885,.32,1.275);
+  }
+  @keyframes modalIn { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 2px;
+  }
+  .modal-close {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--white);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  .modal-close:hover { background: rgba(255,59,59,0.2); color: var(--red); }
+  .modal-body { padding: 24px; }
+
+  /* ─── WORDLE GAME ─── */
+  .wordle-grid {
+    display: grid;
+    grid-template-rows: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 20px;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .wordle-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .wordle-cell {
+    aspect-ratio: 1;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    background: transparent;
+  }
+  .wordle-cell.filled { border-color: rgba(255,255,255,0.35); }
+  .wordle-cell.correct { background: var(--grass); border-color: var(--grass); animation: pop 0.3s; }
+  .wordle-cell.present { background: var(--gold); border-color: var(--gold); color: #000; animation: pop 0.3s; }
+  .wordle-cell.absent { background: #374151; border-color: #374151; animation: pop 0.3s; }
+  @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
+  .wordle-keyboard {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+  }
+  .wordle-kb-row { display: flex; gap: 5px; }
+  .wordle-key {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: var(--white);
+    border-radius: 5px;
+    padding: 10px 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    min-width: 34px;
+    transition: background 0.15s;
+  }
+  .wordle-key:hover { background: rgba(255,255,255,0.18); }
+  .wordle-key.wide { min-width: 54px; font-size: 12px; }
+  .wordle-key.correct { background: var(--grass); color: #000; }
+  .wordle-key.present { background: var(--gold); color: #000; }
+  .wordle-key.absent { background: #374151; }
+
+  /* ─── GUESS THE PLAYER ─── */
+  .silhouette-wrap {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .player-silhouette {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a2540, #243050);
+    border: 2px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    filter: brightness(0.05) contrast(1) invert(1) brightness(0.08);
+    transition: all 0.5s;
+    margin: 0 auto;
+  }
+  .player-silhouette.revealed { filter: none; }
+  .player-clue {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+  .clue-label { color: var(--muted); font-size: 11px; letter-spacing: 1px; font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+  .clue-value { font-weight: 600; }
+  .guess-input-row { display: flex; gap: 8px; margin-top: 16px; }
+  .guess-input {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--white);
+    font-size: 14px;
+    font-family: 'Barlow', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .guess-input:focus { border-color: rgba(0,200,81,0.4); }
+  .guess-btn {
+    background: var(--grass);
+    border: none;
+    color: #000;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .guess-btn:hover { opacity: 0.85; }
+  .guesses-log { max-height: 120px; overflow-y: auto; margin-top: 10px; }
+  .guess-log-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+  .guess-correct { background: rgba(0,200,81,0.15); border: 1px solid rgba(0,200,81,0.3); }
+  .guess-wrong { background: rgba(255,59,59,0.1); border: 1px solid rgba(255,59,59,0.15); }
+
+  /* ─── PENALTY SHOOTOUT ─── */
+  .penalty-arena {
+    background: linear-gradient(180deg, #0d4a1a 0%, #0a3a14 40%, #062b0e 100%);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    min-height: 200px;
+  }
+  .penalty-arena::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 40%;
+    border: 2px solid rgba(255,255,255,0.12);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+  }
+  .goal-posts {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0 20px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .goal-frame {
+    width: 100%;
+    height: 80px;
+    border: 3px solid rgba(255,255,255,0.7);
+    border-bottom: none;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 3px;
+    padding: 3px;
+    border-radius: 3px 3px 0 0;
+    background: rgba(0,0,0,0.15);
+    position: relative;
+    z-index: 1;
+  }
+  .goal-zone {
+    border-radius: 3px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .goal-zone:hover { background: rgba(0,200,81,0.2); border-color: var(--grass); }
+  .goal-zone.scored { background: rgba(0,200,81,0.5); animation: flashGreen 0.5s; }
+  .goal-zone.saved { background: rgba(255,59,59,0.5); animation: flashRed 0.5s; }
+  @keyframes flashGreen { 0%,100%{background:rgba(0,200,81,0.5)} 50%{background:rgba(0,200,81,0.9)} }
+  @keyframes flashRed { 0%,100%{background:rgba(255,59,59,0.5)} 50%{background:rgba(255,59,59,0.9)} }
+  .penalty-score-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 4px;
+    color: var(--white);
+  }
+  .penalty-score-display .vs { font-size: 18px; color: var(--muted); margin: 0 8px; }
+  .penalty-kicks {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .kick-icon {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--muted);
+  }
+  .kick-icon.g { background: var(--grass); border-color: var(--grass); }
+  .kick-icon.m { background: var(--red); border-color: var(--red); }
+
+  /* ─── PREDICTION GAME ─── */
+  .prediction-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .pred-teams {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .pred-vs {
+    flex: 1;
+    text-align: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+  .pred-btns { display: flex; gap: 8px; }
+  .pred-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--white);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .pred-btn:hover { border-color: rgba(0,200,81,0.4); background: rgba(0,200,81,0.08); }
+  .pred-btn.selected { background: var(--grass); color: #000; border-color: var(--grass); }
+  .pred-btn.selected-x { background: var(--gold); color: #000; border-color: var(--gold); }
+  .pred-btn.selected-2 { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  /* ─── STATS PAGE ─── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .stat-hero {
+    background: var(--pitch-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .stat-hero-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    line-height: 1;
+    color: var(--grass);
+    margin-bottom: 4px;
+  }
+  .stat-hero-label {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+  }
+  .top-scorers {
+    background: var(--pitch-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .scorer-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .scorer-row:hover { background: rgba(255,255,255,0.03); }
+  .scorer-row:last-child { border-bottom: none; }
+  .scorer-rank {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--muted);
+    width: 30px;
+    flex-shrink: 0;
+  }
+  .scorer-rank.r1 { color: var(--gold); }
+  .scorer-rank.r2 { color: #C0C0C0; }
+  .scorer-rank.r3 { color: #CD7F32; }
+  .scorer-info { flex: 1; margin-left: 12px; }
+  .scorer-name { font-weight: 600; font-size: 14px; }
+  .scorer-club { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .scorer-goals {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--white);
+    text-align: right;
+  }
+  .goals-label { font-size: 10px; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; }
+  .goals-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .goals-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--grass), #00ff88);
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media(max-width:900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .groups-grid { grid-template-columns: repeat(2,1fr); }
+    .games-grid { grid-template-columns: repeat(2,1fr); }
+    .stats-grid { grid-template-columns: 1fr; }
+  }
+  @media(max-width:600px) {
+    .groups-grid { grid-template-columns: 1fr; }
+    .games-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+  }
+
+  /* ─── ANIMATIONS ─── */
+  .fade-in { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+  .pulse-green {
+    animation: pulseGreen 2s ease infinite;
+  }
+  @keyframes pulseGreen {
+    0%,100%{ box-shadow: 0 0 0 0 rgba(0,200,81,0.3); }
+    50%{ box-shadow: 0 0 0 6px rgba(0,200,81,0); }
+  }
+
+  /* ─── NOTIFICATION TOAST ─── */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--pitch-card);
+    border: 1px solid rgba(0,200,81,0.4);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 14px;
+    max-width: 320px;
+    z-index: 9998;
+    animation: toastIn 0.4s cubic-bezier(.175,.885,.32,1.275);
+    display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .toast.show { display: block; }
+  .toast-title { font-weight: 700; color: var(--grass); margin-bottom: 4px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; }
+  @keyframes toastIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ─── PITCH BACKGROUND PATTERN ─── */
+  .pitch-pattern {
+    position: fixed;
+    inset: 0;
+    opacity: 0.015;
+    background-image: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 60px,
+      rgba(255,255,255,0.3) 60px,
+      rgba(255,255,255,0.3) 62px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+  main { position: relative; z-index: 1; }
+</style>
+</head>
+<body>
+
+<div class="pitch-pattern"></div>
+
+<!-- TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-label">⚡ BREAKING</div>
+  <div style="overflow:hidden;flex:1">
+    <div class="ticker-track" id="ticker">
+      <span class="ticker-item"><span class="ticker-dot"></span>⚽ GOAL! Mbappe 67' — France 2-1 Germany</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>🔴 RED CARD! Bellingham (England) — 78'</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 TRANSFER: Vinicius Jr to Man City — €220M confirmed</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>⚽ GOAL! Haaland 45' — Man City 3-0 Arsenal</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>🏥 INJURY: Pedri ruled out 3 weeks — hamstring</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 TRANSFER: Bellingham to Real Madrid extension signed</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>🏆 WC 2026: USA, Canada, Mexico — Group A confirmed</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>⚽ GOAL! Salah hat-trick 90' — Liverpool 4-0 Chelsea</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 TRANSFER: Osimhen to Barcelona — medical scheduled</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>Mbappe 67' — France 2-1 Germany</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>🔴 RED CARD! Bellingham (England) — 78'</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 TRANSFER: Vinicius Jr to Man City — €220M confirmed</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>⚽ GOAL! Haaland 45' — Man City 3-0 Arsenal</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>🏥 INJURY: Pedri ruled out 3 weeks — hamstring</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 TRANSFER: Bellingham to Real Madrid extension signed</span>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">PITCH<span>HQ</span></div>
+  <ul class="nav-links">
+    <li><a onclick="showPage('home')" class="active" id="nav-home">HOME</a></li>
+    <li><a onclick="showPage('world-cup')" id="nav-world-cup">🏆 WORLD CUP</a></li>
+    <li><a onclick="showPage('transfers')" id="nav-transfers">TRANSFERS</a></li>
+    <li><a onclick="showPage('games')" id="nav-games">🎮 MINI GAMES</a></li>
+    <li><a onclick="showPage('stats')" id="nav-stats">STATS</a></li>
+  </ul>
+  <div class="live-badge">
+    <div class="live-dot"></div>
+    <span>LIVE</span>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════ HOME PAGE ═══════════════════════ -->
+<div class="page active fade-in" id="page-home">
+  <!-- LIVE SCORE STRIP -->
+  <div style="padding:20px 20px 0; max-width:1400px; margin:0 auto;">
+    <div class="section-header">
+      <div class="section-title">Live & Recent</div>
+      <div class="see-all">View all fixtures →</div>
+    </div>
+    <div class="scores-strip" id="scores-strip">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <div>
+      <!-- NEWS FEED -->
+      <div class="section-header">
+        <div class="section-title">Latest News</div>
+        <div class="see-all">All news →</div>
+      </div>
+      <div class="card" style="margin-bottom:24px">
+        <div id="news-feed"><!-- Populated by JS --></div>
+      </div>
+
+      <!-- LIVE TRANSFERS -->
+      <div class="section-header">
+        <div class="section-title">Transfer Latest</div>
+        <div class="see-all" onclick="showPage('transfers')">Transfer Centre →</div>
+      </div>
+      <div class="card">
+        <div id="home-transfers"><!-- Populated by JS --></div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <!-- STANDINGS -->
+      <div class="card">
+        <div class="league-tabs" id="standings-tabs">
+          <div class="league-tab active" onclick="switchLeague('pl')">PL</div>
+          <div class="league-tab" onclick="switchLeague('ll')">La Liga</div>
+          <div class="league-tab" onclick="switchLeague('bl')">Bundesliga</div>
+          <div class="league-tab" onclick="switchLeague('sa')">Serie A</div>
+        </div>
+        <div style="padding:0 4px" id="standings-body"><!-- Populated by JS --></div>
+      </div>
+
+      <!-- TOP SCORER WIDGET -->
+      <div class="card">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--border)">
+          <div class="section-title" style="font-size:16px">Top Scorer</div>
+        </div>
+        <div style="padding:16px">
+          <div style="text-align:center;padding:8px 0">
+            <div style="font-size:48px">🇳🇴</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;margin-top:6px">Erling Haaland</div>
+            <div style="color:var(--muted);font-size:12px">Manchester City</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--grass);line-height:1.1">28</div>
+            <div style="color:var(--muted);font-size:11px;font-family:'Barlow Condensed',sans-serif;letter-spacing:2px">GOALS THIS SEASON</div>
+          </div>
+          <div class="goals-bar" style="margin-top:12px"><div class="goals-fill" style="width:85%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px;font-family:'Barlow Condensed',sans-serif">
+            <span>28 goals</span><span>33 games</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ WORLD CUP PAGE ═══════════════════════ -->
+<div class="page fade-in" id="page-world-cup">
+  <div style="padding:24px 20px; max-width:1400px; margin:0 auto;">
+    <!-- HERO -->
+    <div class="wc-hero">
+      <div class="wc-label">FIFA World Cup 2026</div>
+      <div class="wc-title">USA · CANADA · <span>MEXICO</span></div>
+      <div class="wc-subtitle">48 teams. 104 matches. One dream. The greatest tournament on Earth.</div>
+      <div class="wc-countdown" id="wc-countdown">
+        <div class="wc-count-block"><div class="wc-count-num" id="cd-days">12</div><div class="wc-count-label">Days</div></div>
+        <div class="wc-count-block"><div class="wc-count-num" id="cd-hrs">07</div><div class="wc-count-label">Hours</div></div>
+        <div class="wc-count-block"><div class="wc-count-num" id="cd-mins">43</div><div class="wc-count-label">Mins</div></div>
+        <div class="wc-count-block"><div class="wc-count-num" id="cd-secs">22</div><div class="wc-count-label">Secs</div></div>
+      </div>
+    </div>
+
+    <!-- GROUP STAGE -->
+    <div class="section-header">
+      <div class="section-title">Group Stage</div>
+      <div class="see-all">Full bracket →</div>
+    </div>
+    <div class="groups-grid" id="groups-grid"><!-- Populated by JS --></div>
+
+    <!-- WC NEWS -->
+    <div class="section-header">
+      <div class="section-title">World Cup News</div>
+    </div>
+    <div class="card" style="max-width:800px">
+      <div class="news-item">
+        <span class="news-tag tag-wc">🏆 WC</span>
+        <div>
+          <div class="news-text">Brazil confirm 26-man squad — Vinicius Jr. named captain for the first time in his career ahead of the tournament</div>
+          <div class="news-time">2 hours ago</div>
+        </div>
+      </div>
+      <div class="news-item">
+        <span class="news-tag tag-wc">🏆 WC</span>
+        <div>
+          <div class="news-text">England's Jude Bellingham fully fit and available for Group C opener vs Serbia at MetLife Stadium, New York</div>
+          <div class="news-time">4 hours ago</div>
+        </div>
+      </div>
+      <div class="news-item">
+        <span class="news-tag tag-injury">INJURY</span>
+        <div>
+          <div class="news-text">Sadio Mané doubtful for Senegal's opening game after training setback — 48-hour assessment ordered</div>
+          <div class="news-time">5 hours ago</div>
+        </div>
+      </div>
+      <div class="news-item">
+        <span class="news-tag tag-news">NEWS</span>
+        <div>
+          <div class="news-text">Morocco emerge as dark horses — Atlas Lions eye unprecedented semi-final run after Euro success</div>
+          <div class="news-time">7 hours ago</div>
+        </div>
+      </div>
+      <div class="news-item">
+        <span class="news-tag tag-wc">🏆 WC</span>
+        <div>
+          <div class="news-text">Messi confirms this will be his final World Cup — Argentina desperate to defend their title on North American soil</div>
+          <div class="news-time">8 hours ago</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TRANSFERS PAGE ═══════════════════════ -->
+<div class="page fade-in" id="page-transfers">
+  <div style="padding:24px 20px; max-width:1000px; margin:0 auto;">
+    <div class="section-header">
+      <div class="section-title">Transfer Centre</div>
+      <div class="see-all" style="color:var(--red)">● LIVE UPDATES</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <button onclick="filterTransfers('all')" class="pred-btn selected" id="tf-all" style="flex:none;padding:7px 16px">All</button>
+      <button onclick="filterTransfers('confirmed')" class="pred-btn" id="tf-confirmed" style="flex:none;padding:7px 16px">✅ Confirmed</button>
+      <button onclick="filterTransfers('rumour')" class="pred-btn" id="tf-rumour" style="flex:none;padding:7px 16px">💬 Rumours</button>
+      <button onclick="filterTransfers('medical')" class="pred-btn" id="tf-medical" style="flex:none;padding:7px 16px">🏥 Medical</button>
+    </div>
+
+    <div class="card" id="transfers-full"><!-- Populated by JS --></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ GAMES PAGE ═══════════════════════ -->
+<div class="page" id="page-games">
+  <div class="games-hero">
+    <div class="games-hero-title">PITCH<span>GAMES</span></div>
+    <div class="games-hero-sub">Test your football knowledge. Daily games, mini challenges, and more.</div>
+  </div>
+  <div class="games-grid" id="games-grid"><!-- Populated by JS --></div>
+</div>
+
+<!-- ═══════════════════════ STATS PAGE ═══════════════════════ -->
+<div class="page fade-in" id="page-stats">
+  <div style="padding:24px 20px; max-width:1200px; margin:0 auto;">
+    <div class="section-header">
+      <div class="section-title">Season Statistics</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-hero">
+        <div class="stat-hero-num">1,247</div>
+        <div class="stat-hero-label">⚽ Total Goals This Season</div>
+      </div>
+      <div class="stat-hero">
+        <div class="stat-hero-num" style="color:var(--red)">342</div>
+        <div class="stat-hero-label">🔴 Red Cards Issued</div>
+      </div>
+      <div class="stat-hero">
+        <div class="stat-hero-num" style="color:var(--blue)">2.73</div>
+        <div class="stat-hero-label">📊 Avg Goals Per Game</div>
+      </div>
+      <div class="stat-hero">
+        <div class="stat-hero-num" style="color:var(--gold)">€2.1B</div>
+        <div class="stat-hero-label">💰 Transfer Spend This Window</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Top Scorers — Premier League</div>
+    </div>
+    <div class="top-scorers">
+      <div id="top-scorers-list"><!-- Populated by JS --></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ═══ GAME MODALS ═══ -->
+
+<!-- Football Wordle Modal -->
+<div class="game-modal" id="modal-wordle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">⚽ FOOT·LE</div>
+      <button class="modal-close" onclick="closeModal('wordle')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:16px">Guess the 5-letter footballer in 6 tries</div>
+      <div class="wordle-grid" id="wordle-grid"></div>
+      <div id="wordle-msg" style="text-align:center;margin-bottom:12px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:16px;letter-spacing:1px;min-height:22px"></div>
+      <div class="wordle-keyboard" id="wordle-kb"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Guess The Player Modal -->
+<div class="game-modal" id="modal-gtp">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🕵️ WHO AM I?</div>
+      <button class="modal-close" onclick="closeModal('gtp')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="silhouette-wrap">
+        <div class="player-silhouette" id="gtp-avatar">⚽</div>
+      </div>
+      <div id="gtp-clues"></div>
+      <div id="gtp-attempts" style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:10px"></div>
+      <div class="guess-input-row">
+        <input type="text" class="guess-input" id="gtp-input" placeholder="Type player name..." onkeydown="if(event.key==='Enter')submitGuess()">
+        <button class="guess-btn" onclick="submitGuess()">GUESS</button>
+      </div>
+      <div class="guesses-log" id="gtp-log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Penalty Shootout Modal -->
+<div class="game-modal" id="modal-penalty">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🥅 PENALTY SHOOTOUT</div>
+      <button class="modal-close" onclick="closeModal('penalty')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;margin-bottom:12px;font-size:13px;color:var(--muted)">Click a zone to aim your shot. 5 kicks each!</div>
+      <div class="penalty-arena">
+        <div class="goal-frame" id="goal-frame"></div>
+        <div style="margin-top:16px">
+          <div class="penalty-score-display">
+            <span id="pen-you">0</span><span class="vs">YOU</span>
+            <span style="color:var(--muted)">–</span>
+            <span class="vs">CPU</span><span id="pen-cpu">0</span>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--muted)">Kick <span id="pen-kick-num">1</span> of 5</div>
+        <div style="display:flex;gap:20px;justify-content:center;margin-top:10px">
+          <div>
+            <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">YOU</div>
+            <div class="penalty-kicks" id="pen-you-kicks"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">CPU</div>
+            <div class="penalty-kicks" id="pen-cpu-kicks"></div>
+          </div>
+        </div>
+      </div>
+      <div id="pen-msg" style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:12px;min-height:30px"></div>
+      <div style="text-align:center">
+        <button class="guess-btn" onclick="resetPenalty()">🔄 PLAY AGAIN</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Predictions Modal -->
+<div class="game-modal" id="modal-predict">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🔮 MATCH PREDICTOR</div>
+      <button class="modal-close" onclick="closeModal('predict')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="color:var(--muted);font-size:13px;margin-bottom:16px">Pick your results for this weekend's fixtures. Score: <span id="pred-score" style="color:var(--grass);font-weight:600">0 pts</span></div>
+      <div id="predictions-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- WC Bracket Modal -->
+<div class="game-modal" id="modal-bracket">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🏆 WC BRACKET BUILDER</div>
+      <button class="modal-close" onclick="closeModal('bracket')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="color:var(--muted);font-size:13px;margin-bottom:16px">Who goes all the way? Pick your WC 2026 winner!</div>
+      <div id="bracket-picks" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      <div style="margin-top:20px;padding:16px;background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.2);border-radius:10px;text-align:center">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">YOUR PREDICTED WINNER</div>
+        <div id="bracket-winner" style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--gold)">— SELECT A TEAM —</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div class="toast" id="toast">
+  <div class="toast-title" id="toast-title"></div>
+  <div id="toast-body"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+
+const liveScores = [
+  { league:"Premier League", home:"Man City 🔵", away:"Arsenal 🔴", hs:3, as:0, time:"78'", live:true },
+  { league:"La Liga", home:"Real Madrid ⚪", away:"Atletico 🔴", hs:2, as:1, time:"55'", live:true },
+  { league:"Bundesliga", home:"Bayern 🔴", away:"Dortmund 🟡", hs:1, as:1, time:"HT", live:true },
+  { league:"Ligue 1", home:"PSG 🔵", away:"Lyon 🔵", hs:2, as:0, time:"FT", live:false },
+  { league:"Serie A", home:"Inter 🔵", away:"Juventus ⚫", hs:1, as:1, time:"FT", live:false },
+  { league:"Champions League", home:"Liverpool 🔴", away:"Dortmund 🟡", hs:3, as:2, time:"90'+2", live:true },
+];
+
+const newsItems = [
+  { tag:"transfer", tagLabel:"TRANSFER", text:"🚨 OFFICIAL: Vinicius Jr. completes mega-move to Manchester City for a world record €220 million fee — medical done, shirt number confirmed", time:"12 min ago" },
+  { tag:"result", tagLabel:"RESULT", text:"Man City demolish Arsenal 3-0 at the Etihad — Haaland nets hat-trick as title race all but over", time:"1 hr ago" },
+  { tag:"news", tagLabel:"NEWS", text:"Pep Guardiola signs contract extension at Manchester City, committing until 2028 as the club targets UCL glory once more", time:"2 hrs ago" },
+  { tag:"injury", tagLabel:"INJURY", text:"Pedri out for 3 weeks with hamstring injury — Barcelona sweating on his availability for UCL semi-final", time:"3 hrs ago" },
+  { tag:"transfer", tagLabel:"TRANSFER", text:"Victor Osimhen to Barcelona: talks ADVANCED — Napoli set final asking price at €90M with add-ons", time:"4 hrs ago" },
+  { tag:"news", tagLabel:"NEWS", text:"Kylian Mbappe scores twice in Real Madrid 3-1 thrashing of Bayern Munich to reach Champions League final", time:"5 hrs ago" },
+  { tag:"transfer", tagLabel:"TRANSFER", text:"Newcastle United table €75M bid for Khvicha Kvaratskhelia as Toon Army eyes Champions League statement signing", time:"6 hrs ago" },
+];
+
+const transfers = [
+  { name:"Vinicius Jr.", avatar:"🇧🇷", from:"Real Madrid", to:"Man City", fee:"€220M", status:"official" },
+  { name:"Victor Osimhen", avatar:"🇳🇬", from:"Napoli", to:"Barcelona", fee:"€90M", status:"medical" },
+  { name:"Khvicha Kvaratskhelia", avatar:"🇬🇪", from:"Napoli", to:"Newcastle", fee:"€75M", status:"rumour" },
+  { name:"Florian Wirtz", avatar:"🇩🇪", from:"Bayer Leverkusen", to:"Liverpool", fee:"€120M", status:"confirmed" },
+  { name:"Lamine Yamal", avatar:"🇪🇸", from:"Barcelona", to:"Barcelona", fee:"EXTENDED", status:"official" },
+  { name:"Sandro Tonali", avatar:"🇮🇹", from:"Newcastle", to:"Inter Milan", fee:"€55M", status:"rumour" },
+  { name:"Erling Haaland", avatar:"🇳🇴", from:"Man City", to:"Man City", fee:"RENEWS", status:"official" },
+  { name:"Gavi", avatar:"🇪🇸", from:"Barcelona", to:"PSG", fee:"€80M", status:"rumour" },
+];
+
+const standings = {
+  pl: [
+    { pos:1, name:"Man City", p:32, w:24, d:5, l:3, pts:77, form:["w","w","w","d","w"], cl:true },
+    { pos:2, name:"Arsenal", p:32, w:22, d:6, l:4, pts:72, form:["l","w","w","w","w"], cl:true },
+    { pos:3, name:"Liverpool", p:32, w:20, d:7, l:5, pts:67, form:["w","w","d","w","l"], cl:true },
+    { pos:4, name:"Chelsea", p:32, w:18, d:6, l:8, pts:60, form:["w","d","w","l","w"], cl:true },
+    { pos:5, name:"Newcastle", p:32, w:16, d:8, l:8, pts:56, form:["d","w","w","w","d"], cl:false },
+    { pos:6, name:"Spurs", p:32, w:14, d:6, l:12, pts:48, form:["l","l","w","d","w"], cl:false },
+    { pos:7, name:"Villa", p:32, w:13, d:7, l:12, pts:46, form:["w","l","w","d","l"], cl:false },
+    { pos:18, name:"Wolves", p:32, w:5, d:9, l:18, pts:24, form:["l","l","l","d","l"], rel:true },
+    { pos:19, name:"Everton", p:32, w:4, d:7, l:21, pts:19, form:["l","l","d","l","l"], rel:true },
+    { pos:20, name:"Luton", p:32, w:3, d:5, l:24, pts:14, form:["l","l","l","l","d"], rel:true },
+  ],
+  ll: [
+    { pos:1, name:"Real Madrid", p:32, w:25, d:4, l:3, pts:79, form:["w","w","w","w","d"], cl:true },
+    { pos:2, name:"Barcelona", p:32, w:23, d:5, l:4, pts:74, form:["w","d","w","w","w"], cl:true },
+    { pos:3, name:"Atletico", p:32, w:19, d:6, l:7, pts:63, form:["l","w","w","d","w"], cl:true },
+    { pos:4, name:"Villarreal", p:32, w:17, d:7, l:8, pts:58, form:["w","w","d","l","w"], cl:true },
+    { pos:5, name:"Sevilla", p:32, w:14, d:8, l:10, pts:50, form:["d","w","w","l","d"], cl:false },
+  ],
+  bl: [
+    { pos:1, name:"Bayern", p:32, w:24, d:4, l:4, pts:76, form:["w","w","d","w","w"], cl:true },
+    { pos:2, name:"Leverkusen", p:32, w:22, d:6, l:4, pts:72, form:["w","w","w","w","l"], cl:true },
+    { pos:3, name:"Dortmund", p:32, w:19, d:5, l:8, pts:62, form:["d","w","l","w","w"], cl:true },
+    { pos:4, name:"Leipzig", p:32, w:16, d:7, l:9, pts:55, form:["l","w","d","w","w"], cl:true },
+    { pos:5, name:"Frankfurt", p:32, w:14, d:6, l:12, pts:48, form:["w","l","w","d","l"], cl:false },
+  ],
+  sa: [
+    { pos:1, name:"Inter Milan", p:32, w:24, d:5, l:3, pts:77, form:["w","w","w","d","w"], cl:true },
+    { pos:2, name:"AC Milan", p:32, w:21, d:6, l:5, pts:69, form:["w","d","w","w","l"], cl:true },
+    { pos:3, name:"Juventus", p:32, w:19, d:7, l:6, pts:64, form:["d","w","d","w","w"], cl:true },
+    { pos:4, name:"Napoli", p:32, w:17, d:6, l:9, pts:57, form:["l","w","w","d","w"], cl:true },
+    { pos:5, name:"Roma", p:32, w:14, d:8, l:10, pts:50, form:["w","w","d","l","l"], cl:false },
+  ]
+};
+
+const wcGroups = [
+  { id:"A", teams: [{flag:"🇺🇸",name:"USA",pts:4},{flag:"🇧🇷",name:"Brazil",pts:4},{flag:"🇸🇳",name:"Senegal",pts:1},{flag:"🇺🇾",name:"Uruguay",pts:1}] },
+  { id:"B", teams: [{flag:"🇫🇷",name:"France",pts:6},{flag:"🇩🇰",name:"Denmark",pts:3},{flag:"🇳🇬",name:"Nigeria",pts:3},{flag:"🇹🇳",name:"Tunisia",pts:0}] },
+  { id:"C", teams: [{flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",name:"England",pts:6},{flag:"🇷🇸",name:"Serbia",pts:3},{flag:"🇮🇷",name:"Iran",pts:1},{flag:"🇺🇸",name:"USA B",pts:0}] },
+  { id:"D", teams: [{flag:"🇵🇹",name:"Portugal",pts:4},{flag:"🇺🇾",name:"Uruguay",pts:4},{flag:"🇰🇷",name:"South Korea",pts:2},{flag:"🇬🇭",name:"Ghana",pts:0}] },
+  { id:"E", teams: [{flag:"🇩🇪",name:"Germany",pts:6},{flag:"🇯🇵",name:"Japan",pts:3},{flag:"🇪🇸",name:"Spain",pts:3},{flag:"🇨🇷",name:"Costa Rica",pts:0}] },
+  { id:"F", teams: [{flag:"🇦🇷",name:"Argentina",pts:5},{flag:"🇲🇽",name:"Mexico",pts:4},{flag:"🇵🇱",name:"Poland",pts:1},{flag:"🇸🇦",name:"Saudi Arabia",pts:1}] },
+  { id:"G", teams: [{flag:"🇧🇷",name:"Brazil",pts:6},{flag:"🇨🇲",name:"Cameroon",pts:3},{flag:"🇨🇭",name:"Switzerland",pts:3},{flag:"🇸🇷",name:"Suriname",pts:0}] },
+  { id:"H", teams: [{flag:"🇵🇹",name:"Portugal",pts:5},{flag:"🇺🇾",name:"Uruguay",pts:4},{flag:"🇰🇷",name:"Korea",pts:1},{flag:"🇬🇳",name:"Guinea",pts:0}] },
+];
+
+const topScorers = [
+  { name:"Erling Haaland", club:"Man City 🔵", flag:"🇳🇴", goals:28, assists:8, pct:100 },
+  { name:"Mohamed Salah", club:"Liverpool 🔴", flag:"🇪🇬", goals:24, assists:12, pct:86 },
+  { name:"Cole Palmer", club:"Chelsea 🔵", flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", goals:22, assists:9, pct:79 },
+  { name:"Alexander Isak", club:"Newcastle ⚫", flag:"🇸🇪", goals:20, assists:5, pct:71 },
+  { name:"Son Heung-min", club:"Spurs ⚪", flag:"🇰🇷", goals:18, assists:7, pct:64 },
+];
+
+const games = [
+  { id:"wordle", icon:"⚽", bg:"linear-gradient(135deg,#0a2e16,#0d4a22)", title:"FOOT·LE", desc:"Guess the 5-letter footballer in 6 tries. A new player every day.", badge:"daily", badgeClass:"badge-daily" },
+  { id:"gtp", icon:"🕵️", bg:"linear-gradient(135deg,#0d1a2e,#1a2e4a)", title:"WHO AM I?", desc:"Uncover clues one-by-one and identify the mystery player. The fewer clues, the more points!", badge:"daily", badgeClass:"badge-daily" },
+  { id:"penalty", icon:"🥅", bg:"linear-gradient(135deg,#0a3a14,#1a5a24)", title:"PENALTY SHOOTOUT", desc:"Pick your spot! Go head-to-head against the CPU in a 5-kick penalty shootout.", badge:"new", badgeClass:"badge-new" },
+  { id:"predict", icon:"🔮", bg:"linear-gradient(135deg,#1a0d2e,#2e1a4a)", title:"MATCH PREDICTOR", desc:"Predict this weekend's results. Compete on the global leaderboard and prove you know football.", badge:"daily", badgeClass:"badge-daily" },
+  { id:"bracket", icon:"🏆", bg:"linear-gradient(135deg,#2e1a00,#4a2e00)", title:"WC BRACKET BUILDER", desc:"Build your perfect World Cup 2026 bracket. Pick winners all the way to the final!", badge:"wc", badgeClass:"badge-wc" },
+  { id:"quiz", icon:"🧠", bg:"linear-gradient(135deg,#1a1a0d,#2e2e0d)", title:"FOOTBALL TRIVIA", desc:"50 questions across 5 categories. History, transfers, records, tactics — how much do you know?", badge:"new", badgeClass:"badge-new" },
+];
+
+// ═══════════════════════════════════════════
+// RENDER FUNCTIONS
+// ═══════════════════════════════════════════
+
+function renderScores() {
+  const el = document.getElementById('scores-strip');
+  el.innerHTML = liveScores.map(s => `
+    <div class="score-card ${s.live ? 'live' : ''}">
+      <div class="score-league">${s.league}</div>
+      <div class="score-row">
+        <div class="score-team"><div class="team-badge">${s.home.split(' ').pop()}</div>${s.home.split(' ').slice(0,-1).join(' ')}</div>
+        <div class="score-val">${s.hs}</div>
+      </div>
+      <div class="score-row">
+        <div class="score-team"><div class="team-badge">${s.away.split(' ').pop()}</div>${s.away.split(' ').slice(0,-1).join(' ')}</div>
+        <div class="score-val">${s.as}</div>
+      </div>
+      <div class="score-time ${s.live ? 'live-time' : ''}">${s.time}</div>
+    </div>
+  `).join('');
+}
+
+function renderNews() {
+  const el = document.getElementById('news-feed');
+  el.innerHTML = newsItems.map(n => `
+    <div class="news-item">
+      <span class="news-tag tag-${n.tag}">${n.tagLabel}</span>
+      <div>
+        <div class="news-text">${n.text}</div>
+        <div class="news-time">${n.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderHomeTransfers() {
+  const el = document.getElementById('home-transfers');
+  el.innerHTML = transfers.slice(0,5).map(t => transferHTML(t)).join('');
+}
+
+function transferHTML(t) {
+  const statusMap = { official:'OFFICIAL ✅', confirmed:'CONFIRMED ✅', rumour:'RUMOUR 💬', medical:'MEDICAL 🏥' };
+  const classMap = { official:'status-official', confirmed:'status-confirmed', rumour:'status-rumour', medical:'status-medical' };
+  return `<div class="transfer-item">
+    <div class="player-avatar">${t.avatar}</div>
+    <div class="transfer-info">
+      <div class="transfer-name">${t.name}</div>
+      <div class="transfer-clubs">${t.from}<span class="arrow-right">→</span>${t.to}</div>
+    </div>
+    <div>
+      <div class="transfer-fee">${t.fee}</div>
+      <div class="transfer-status ${classMap[t.status]}">${statusMap[t.status]}</div>
+    </div>
+  </div>`;
+}
+
+function renderTransfersFull(filter='all') {
+  const el = document.getElementById('transfers-full');
+  const filtered = filter === 'all' ? transfers : transfers.filter(t => t.status === filter);
+  el.innerHTML = filtered.map(t => transferHTML(t)).join('') || '<div style="padding:30px;text-align:center;color:var(--muted)">No transfers in this category</div>';
+}
+
+let currentLeague = 'pl';
+function renderStandings(league) {
+  currentLeague = league;
+  const data = standings[league];
+  const el = document.getElementById('standings-body');
+  el.innerHTML = `<table class="standings-table">
+    <thead><tr>
+      <th style="width:22px">#</th>
+      <th style="text-align:left">Team</th>
+      <th>P</th><th>W</th><th>GD</th><th>PTS</th><th>Form</th>
+    </tr></thead>
+    <tbody>
+    ${data.map(t => `<tr>
+      <td><div class="pos-num ${t.cl?'cl':''} ${t.rel?'rel':''}">${t.pos}</div></td>
+      <td><div class="team-name-short">${t.name}</div></td>
+      <td style="color:var(--muted)">${t.p}</td>
+      <td style="color:var(--muted)">${t.w}</td>
+      <td style="color:var(--muted)">${t.w*3 - t.l*2}</td>
+      <td><div class="pts">${t.pts}</div></td>
+      <td><div class="form-dots">${t.form.map(f=>`<div class="form-dot form-${f}"></div>`).join('')}</div></td>
+    </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function switchLeague(l) {
+  document.querySelectorAll('.league-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderStandings(l);
+}
+
+function renderGroups() {
+  const el = document.getElementById('groups-grid');
+  el.innerHTML = wcGroups.map(g => `
+    <div class="group-card">
+      <div class="group-header">GROUP ${g.id}</div>
+      ${g.teams.map((t,i) => `
+        <div class="group-team">
+          <div class="gt-left">
+            <span class="gt-flag">${t.flag}</span>
+            <span class="${i<2?'gt-pos-'+(i+1):''}">${t.name}</span>
+          </div>
+          <span class="gt-pts">${t.pts}</span>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function renderGames() {
+  const el = document.getElementById('games-grid');
+  el.innerHTML = games.map(g => `
+    <div class="game-card" onclick="openGame('${g.id}')">
+      <div class="game-banner" style="background:${g.bg}">
+        <span style="font-size:56px;position:relative;z-index:1">${g.icon}</span>
+        <span class="game-tag-badge ${g.badgeClass}">${g.badge.toUpperCase()}</span>
+      </div>
+      <div class="game-info">
+        <div class="game-name">${g.title}</div>
+        <div class="game-desc">${g.desc}</div>
+      </div>
+      <span class="game-play-btn">▶ PLAY NOW</span>
+    </div>
+  `).join('');
+}
+
+function renderTopScorers() {
+  const el = document.getElementById('top-scorers-list');
+  el.innerHTML = topScorers.map((s,i) => `
+    <div class="scorer-row">
+      <div class="scorer-rank r${i+1}">${i+1}</div>
+      <div style="font-size:24px">${s.flag}</div>
+      <div class="scorer-info">
+        <div class="scorer-name">${s.name}</div>
+        <div class="scorer-club">${s.club} · ${s.assists} assists</div>
+        <div class="goals-bar"><div class="goals-fill" style="width:${s.pct}%"></div></div>
+      </div>
+      <div style="text-align:right">
+        <div class="scorer-goals">${s.goals}</div>
+        <div class="goals-label">GOALS</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+// GAMES
+// ═══════════════════════════════════════════
+
+function openGame(id) {
+  if (id === 'wordle') { openModal('wordle'); initWordle(); }
+  else if (id === 'gtp') { openModal('gtp'); initGTP(); }
+  else if (id === 'penalty') { openModal('penalty'); initPenalty(); }
+  else if (id === 'predict') { openModal('predict'); initPredictions(); }
+  else if (id === 'bracket') { openModal('bracket'); initBracket(); }
+  else if (id === 'quiz') { showToast('🧠 TRIVIA', 'Football Trivia coming soon — challenge mode drops this weekend!'); }
+}
+
+function openModal(id) {
+  document.getElementById('modal-' + id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById('modal-' + id).classList.remove('open');
+}
+
+// ─── WORDLE ───
+const wordleWords = ['MESSI', 'SALAH', 'HAALAND'.slice(0,5), 'PEDRO', 'GNABR', 'MODRI', 'NEUER', 'KAKAR'];
+const wordleTargets = ['SALAH','PEDRO','NEUER','MODRI','KAKAR','GNABR','MESSI'];
+let wordleState;
+
+function initWordle() {
+  const target = wordleTargets[Math.floor(Math.random() * wordleTargets.length)];
+  wordleState = { target, guesses: [], currentGuess: '', gameOver: false };
+  renderWordleGrid();
+  renderWordleKB();
+  document.getElementById('wordle-msg').textContent = '';
+  document.addEventListener('keydown', wordleKeyHandler);
+}
+
+function wordleKeyHandler(e) {
+  const modal = document.getElementById('modal-wordle');
+  if (!modal.classList.contains('open') || wordleState.gameOver) return;
+  const key = e.key.toUpperCase();
+  if (key === 'ENTER') wordleSubmit();
+  else if (key === 'BACKSPACE') { wordleState.currentGuess = wordleState.currentGuess.slice(0,-1); renderWordleGrid(); }
+  else if (/^[A-Z]$/.test(key) && wordleState.currentGuess.length < 5) { wordleState.currentGuess += key; renderWordleGrid(); }
+}
+
+function wordleKBClick(k) {
+  if (wordleState.gameOver) return;
+  if (k === '⌫') { wordleState.currentGuess = wordleState.currentGuess.slice(0,-1); }
+  else if (k === 'ENTER') { wordleSubmit(); }
+  else if (wordleState.currentGuess.length < 5) { wordleState.currentGuess += k; }
+  renderWordleGrid();
+}
+
+function wordleSubmit() {
+  const {target, guesses, currentGuess} = wordleState;
+  if (currentGuess.length !== 5) { showWordleMsg('Type 5 letters!'); return; }
+  const result = evaluateWord(currentGuess, target);
+  wordleState.guesses.push({ guess: currentGuess, result });
+  wordleState.currentGuess = '';
+  renderWordleGrid();
+  renderWordleKB();
+  if (currentGuess === target) { wordleState.gameOver = true; showWordleMsg('⚽ GOOOAL! You got it!'); }
+  else if (wordleState.guesses.length >= 6) { wordleState.gameOver = true; showWordleMsg(`The answer was ${target}`); }
+}
+
+function evaluateWord(guess, target) {
+  const res = Array(5).fill('absent');
+  const tArr = target.split('');
+  const gArr = guess.split('');
+  gArr.forEach((c,i) => { if (c === tArr[i]) { res[i] = 'correct'; tArr[i] = null; } });
+  gArr.forEach((c,i) => { if (res[i] !== 'correct') { const j = tArr.indexOf(c); if (j !== -1) { res[i] = 'present'; tArr[j] = null; } } });
+  return res;
+}
+
+function showWordleMsg(m) { const el = document.getElementById('wordle-msg'); el.textContent = m; }
+
+function renderWordleGrid() {
+  const el = document.getElementById('wordle-grid');
+  el.innerHTML = '';
+  for (let r = 0; r < 6; r++) {
+    const row = document.createElement('div');
+    row.className = 'wordle-row';
+    for (let c = 0; c < 5; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'wordle-cell';
+      if (r < wordleState.guesses.length) {
+        cell.textContent = wordleState.guesses[r].guess[c];
+        cell.classList.add(wordleState.guesses[r].result[c]);
+        cell.style.animationDelay = `${c * 0.08}s`;
+      } else if (r === wordleState.guesses.length) {
+        cell.textContent = wordleState.currentGuess[c] || '';
+        if (wordleState.currentGuess[c]) cell.classList.add('filled');
+      }
+      row.appendChild(cell);
+    }
+    el.appendChild(row);
+  }
+}
+
+function renderWordleKB() {
+  const rows = [['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['ENTER','Z','X','C','V','B','N','M','⌫']];
+  const kbEl = document.getElementById('wordle-kb');
+  const letterStates = {};
+  wordleState.guesses.forEach(({guess,result}) => {
+    guess.split('').forEach((c,i) => {
+      const cur = letterStates[c];
+      const pri = {correct:3,present:2,absent:1};
+      if (!cur || pri[result[i]] > pri[cur]) letterStates[c] = result[i];
+    });
+  });
+  kbEl.innerHTML = rows.map(row => `
+    <div class="wordle-kb-row">
+      ${row.map(k => `<button class="wordle-key ${k.length > 1 ? 'wide' : ''} ${letterStates[k] || ''}" onclick="wordleKBClick('${k}')">${k}</button>`).join('')}
+    </div>
+  `).join('');
+}
+
+// ─── GUESS THE PLAYER ───
+const players = [
+  { name:"Erling Haaland", emoji:"🇳🇴", clues:[{l:"Nationality",v:"Norwegian"},{l:"Club",v:"Man City"},{l:"Position",v:"Striker"},{l:"Age",v:"23"},{l:"Jersey #",v:"9"}] },
+  { name:"Kylian Mbappe", emoji:"🇫🇷", clues:[{l:"Nationality",v:"French"},{l:"Club",v:"Real Madrid"},{l:"Position",v:"Forward"},{l:"Age",v:"25"},{l:"Jersey #",v:"7"}] },
+  { name:"Pedri", emoji:"🇪🇸", clues:[{l:"Nationality",v:"Spanish"},{l:"Club",v:"Barcelona"},{l:"Position",v:"Midfielder"},{l:"Age",v:"21"},{l:"Jersey #",v:"8"}] },
+  { name:"Bukayo Saka", emoji:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", clues:[{l:"Nationality",v:"English"},{l:"Club",v:"Arsenal"},{l:"Position",v:"Winger"},{l:"Age",v:"22"},{l:"Jersey #",v:"7"}] },
+];
+let gtpState;
+
+function initGTP() {
+  const player = players[Math.floor(Math.random() * players.length)];
+  gtpState = { player, revealed: 1, guesses: [], won: false };
+  renderGTP();
+}
+
+function renderGTP() {
+  const {player, revealed, guesses, won} = gtpState;
+  const avatar = document.getElementById('gtp-avatar');
+  avatar.textContent = won ? player.emoji : '⚽';
+  avatar.className = 'player-silhouette' + (won ? ' revealed' : '');
+  document.getElementById('gtp-attempts').textContent = `${revealed} clue${revealed>1?'s':''} revealed — ${6-guesses.length} guesses remaining`;
+  document.getElementById('gtp-clues').innerHTML = player.clues.slice(0, revealed).map(c => `
+    <div class="player-clue">
+      <span class="clue-label">${c.l}</span>
+      <span class="clue-value">${c.v}</span>
+    </div>
+  `).join('');
+  document.getElementById('gtp-log').innerHTML = guesses.map(g => `
+    <div class="guess-log-item ${g.correct ? 'guess-correct' : 'guess-wrong'}">
+      <span>${g.name}</span>
+      <span>${g.correct ? '✅ CORRECT!' : '❌'}</span>
+    </div>
+  `).join('');
+}
+
+function submitGuess() {
+  const input = document.getElementById('gtp-input');
+  const val = input.value.trim();
+  if (!val) return;
+  const correct = val.toLowerCase() === gtpState.player.name.toLowerCase();
+  gtpState.guesses.push({ name: val, correct });
+  input.value = '';
+  if (correct) {
+    gtpState.won = true;
+    showToast('⚽ CORRECT!', `You identified ${gtpState.player.name}!`);
+  } else if (gtpState.guesses.length < 5 && gtpState.revealed < 5) {
+    gtpState.revealed++;
+  } else if (gtpState.guesses.length >= 5) {
+    showToast('❌ GAME OVER', `It was ${gtpState.player.name}!`);
+  }
+  renderGTP();
+}
+
+// ─── PENALTY SHOOTOUT ───
+let penState;
+function initPenalty() {
+  penState = { youScore: 0, cpuScore: 0, kick: 1, youKicks:[], cpuKicks:[], done: false };
+  renderPenaltyUI();
+  buildGoalZones();
+}
+
+function buildGoalZones() {
+  const frame = document.getElementById('goal-frame');
+  frame.innerHTML = '';
+  for (let i = 0; i < 6; i++) {
+    const z = document.createElement('div');
+    z.className = 'goal-zone';
+    z.innerHTML = '&nbsp;';
+    z.onclick = () => takeKick(i);
+    frame.appendChild(z);
+  }
+}
+
+function takeKick(zone) {
+  if (penState.done || penState.kick > 5) return;
+  const zones = document.querySelectorAll('.goal-zone');
+  // Player kick
+  const saved = Math.random() < 0.25;
+  const youGoal = !saved;
+  zones[zone].classList.add(youGoal ? 'scored' : 'saved');
+  zones[zone].innerHTML = youGoal ? '⚽' : '🧤';
+  if (youGoal) penState.youScore++;
+  penState.youKicks.push(youGoal);
+  // CPU kick
+  const cpuGoal = Math.random() < 0.65;
+  if (cpuGoal) penState.cpuScore++;
+  penState.cpuKicks.push(cpuGoal);
+  penState.kick++;
+  setTimeout(() => {
+    renderPenaltyUI();
+    if (penState.kick > 5) {
+      penState.done = true;
+      const msg = document.getElementById('pen-msg');
+      if (penState.youScore > penState.cpuScore) msg.innerHTML = '<span style="color:var(--grass)">🏆 YOU WIN!</span>';
+      else if (penState.youScore < penState.cpuScore) msg.innerHTML = '<span style="color:var(--red)">💔 CPU WINS</span>';
+      else msg.innerHTML = '<span style="color:var(--gold)">🤝 IT\'S A DRAW!</span>';
+      buildGoalZones();
+    } else {
+      buildGoalZones();
+    }
+  }, 600);
+}
+
+function renderPenaltyUI() {
+  document.getElementById('pen-you').textContent = penState.youScore;
+  document.getElementById('pen-cpu').textContent = penState.cpuScore;
+  document.getElementById('pen-kick-num').textContent = Math.min(penState.kick, 5);
+  const renderKicks = (arr, elId) => {
+    const el = document.getElementById(elId);
+    el.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+      const d = document.createElement('div');
+      d.className = 'kick-icon';
+      if (i < arr.length) d.classList.add(arr[i] ? 'g' : 'm');
+      el.appendChild(d);
+    }
+  };
+  renderKicks(penState.youKicks, 'pen-you-kicks');
+  renderKicks(penState.cpuKicks, 'pen-cpu-kicks');
+}
+
+function resetPenalty() {
+  document.getElementById('pen-msg').textContent = '';
+  initPenalty();
+}
+
+// ─── PREDICTIONS ───
+const predMatches = [
+  { h:"Man City 🔵", a:"Arsenal 🔴" },
+  { h:"Liverpool 🔴", a:"Chelsea 🔵" },
+  { h:"Real Madrid ⚪", a:"Barcelona 🔴" },
+  { h:"Bayern 🔴", a:"Dortmund 🟡" },
+];
+let predPicks = {};
+
+function initPredictions() {
+  predPicks = {};
+  const el = document.getElementById('predictions-list');
+  el.innerHTML = predMatches.map((m,i) => `
+    <div class="prediction-card">
+      <div class="pred-teams">
+        <span>${m.h}</span><span class="pred-vs">VS</span><span>${m.a}</span>
+      </div>
+      <div class="pred-btns">
+        <button class="pred-btn" id="pred-${i}-1" onclick="pickResult(${i},'1')">1</button>
+        <button class="pred-btn" id="pred-${i}-x" onclick="pickResult(${i},'x')">X</button>
+        <button class="pred-btn" id="pred-${i}-2" onclick="pickResult(${i},'2')">2</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function pickResult(i, pick) {
+  predPicks[i] = pick;
+  ['1','x','2'].forEach(p => {
+    const btn = document.getElementById(`pred-${i}-${p}`);
+    btn.classList.remove('selected','selected-x','selected-2');
+  });
+  const btn = document.getElementById(`pred-${i}-${pick}`);
+  btn.classList.add(pick === 'x' ? 'selected-x' : pick === '2' ? 'selected-2' : 'selected');
+  const pts = Object.keys(predPicks).length * 3;
+  document.getElementById('pred-score').textContent = pts + ' pts';
+}
+
+// ─── BRACKET ───
+const wcTeams = ['🇧🇷 Brazil','🇦🇷 Argentina','🇫🇷 France','🏴󠁧󠁢󠁥󠁮󠁧󠁿 England','🇩🇪 Germany','🇪🇸 Spain','🇵🇹 Portugal','🇳🇱 Netherlands','🇺🇸 USA','🇯🇵 Japan','🇲🇦 Morocco','🇸🇳 Senegal'];
+let bracketPick = null;
+
+function initBracket() {
+  const el = document.getElementById('bracket-picks');
+  el.innerHTML = wcTeams.map(t => `
+    <button class="pred-btn" style="flex:none;padding:8px 14px;font-size:13px" onclick="pickWinner('${t}')">${t}</button>
+  `).join('');
+}
+
+function pickWinner(team) {
+  bracketPick = team;
+  document.querySelectorAll('#bracket-picks .pred-btn').forEach(b => b.classList.remove('selected'));
+  event.target.classList.add('selected');
+  document.getElementById('bracket-winner').textContent = team;
+}
+
+// ═══════════════════════════════════════════
+// COUNTDOWN
+// ═══════════════════════════════════════════
+
+function updateCountdown() {
+  const target = new Date('2026-06-11T19:00:00Z');
+  const now = new Date();
+  const diff = Math.max(0, target - now);
+  const days = Math.floor(diff / 86400000);
+  const hrs = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  const secs = Math.floor((diff % 60000) / 1000);
+  const fmt = n => String(n).padStart(2,'0');
+  const d = document.getElementById('cd-days');
+  if (d) { d.textContent = days; document.getElementById('cd-hrs').textContent = fmt(hrs); document.getElementById('cd-mins').textContent = fmt(mins); document.getElementById('cd-secs').textContent = fmt(secs); }
+}
+
+// ═══════════════════════════════════════════
+// FILTERS
+// ═══════════════════════════════════════════
+
+function filterTransfers(f) {
+  ['all','confirmed','rumour','medical'].forEach(x => {
+    const el = document.getElementById('tf-'+x);
+    if (el) el.classList.remove('selected');
+  });
+  const btn = document.getElementById('tf-'+f);
+  if (btn) btn.classList.add('selected');
+  renderTransfersFull(f);
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+
+function showToast(title, body) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-body').textContent = body;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// ═══════════════════════════════════════════
+// LIVE SCORE TICKER SIMULATION
+// ═══════════════════════════════════════════
+
+function simulateLiveScore() {
+  const events = [
+    '⚽ GOAL! Haaland 45+2\' — Man City 4-0',
+    '🟡 YELLOW CARD — Rodri (Man City) 52\'',
+    '🔄 SUB — Foden on for Gvardiol 60\'',
+    '⚽ GOAL! Saka 71\' — Arsenal 1-3',
+    '🟡 YELLOW — Partey (Arsenal) 78\'',
+    '📊 FT: Man City 4-1 Arsenal',
+  ];
+  let i = 0;
+  setInterval(() => {
+    const liveCard = document.querySelector('.score-card.live .score-val');
+    if (Math.random() < 0.3 && i < events.length) {
+      showToast('MATCH UPDATE', events[i % events.length]);
+      i++;
+    }
+  }, 15000);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderScores();
+  renderNews();
+  renderHomeTransfers();
+  renderStandings('pl');
+  renderGroups();
+  renderGames();
+  renderTopScorers();
+  renderTransfersFull();
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+  simulateLiveScore();
+
+  // Close modals on backdrop click
+  document.querySelectorAll('.game-modal').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  });
+});
+</script>
+</body>
+</html>
